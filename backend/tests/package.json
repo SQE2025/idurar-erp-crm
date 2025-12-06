@@ -5,12 +5,13 @@
   "scripts": {
     "test": "jest --coverage --verbose",
     "test:watch": "jest --watch",
-    "test:integration": "jest --testMatch='**/*.integration.test.js'"
+    "test:integration": "jest --testMatch='**/*.integration.test.js' --verbose",
+    "test:all": "jest --coverage --verbose"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.11",
     "jest": "^29.7.0",
-    "supertest": "^6.3.3",
-    "@types/jest": "^29.5.11"
+    "supertest": "^6.3.4"
   },
   "jest": {
     "testEnvironment": "node",

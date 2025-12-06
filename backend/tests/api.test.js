@@ -1,4 +1,10 @@
-// Backend API Unit Tests - Data Validation Tests
+/**
+ * Backend API Unit Tests - Data Validation Tests
+ * 
+ * NOTE: These are UNIT tests that validate data structures and business logic.
+ * For INTEGRATION tests that call real API endpoints, see api.integration.test.js
+ */
+
 describe('Authentication API Tests', () => {
   const mockLoginResponse = {
     success: true,

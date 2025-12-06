@@ -2,10 +2,38 @@
 // Custom commands for authentication
 // ***********************************************
 
+/**
+ * Login as admin user with actual credentials
+ * Uses session to cache authentication across tests
+ */
 Cypress.Commands.add('loginAsAdmin', () => {
-  cy.visit('/login');
-  cy.get('button[type="submit"]').click();
-  cy.wait(3000);
+  cy.session('admin-session', () => {
+    cy.visit('/login');
+    
+    // Wait for page to load
+    cy.get('input[type="email"]', { timeout: 10000 }).should('be.visible');
+    
+    // Enter actual credentials
+    cy.get('input[type="email"]').clear().type('admin@demo.com');
+    cy.get('input[type="password"]').clear().type('admin123');
+    
+    // Submit the form
+    cy.get('button[type="submit"]').click();
+    
+    // Wait for successful login - should redirect away from /login
+    cy.url().should('not.include', '/login', { timeout: 10000 });
+    
+    // Verify we're logged in by checking for dashboard or main app
+    cy.get('body').should('contain', 'Dashboard').or('contain', 'Client');
+  }, {
+    validate() {
+      // Verify session is still valid
+      cy.getCookie('token').should('exist');
+    }
+  });
+  
+  // After session is restored, visit the page
+  cy.visit('/');
 });
 
 Cypress.Commands.add('login', (email, password) => {

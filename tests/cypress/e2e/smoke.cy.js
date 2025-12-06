@@ -4,9 +4,20 @@
  */
 
 describe('Smoke Tests', () => {
-  it('should load application and login successfully', () => {
-    cy.visit('/');
+  it('should load application and login successfully with credentials', () => {
+    cy.visit('/login');
+    
+    // Wait for form to be visible
+    cy.get('input[type="email"]', { timeout: 10000 }).should('be.visible');
+    
+    // Enter credentials
+    cy.get('input[type="email"]').clear().type('admin@demo.com');
+    cy.get('input[type="password"]').clear().type('admin123');
+    
+    // Submit
     cy.get('button[type="submit"]').click();
+    
+    // Wait for redirect after login
     cy.wait(3000);
     cy.url().should('not.include', '/login');
   });

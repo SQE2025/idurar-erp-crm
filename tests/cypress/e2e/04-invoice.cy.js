@@ -10,7 +10,7 @@ describe('Invoice Management', () => {
     cy.wait(2000);
   });
 
-  it.skip('should display invoice list page with table and status indicators', () => {
+  it('should display invoice list page with table and status indicators', () => {
     cy.url().should('include', '/invoice');
     
     // Verify table exists
@@ -28,7 +28,7 @@ describe('Invoice Management', () => {
     });
   });
 
-  it.skip('should open invoice creation form with all required fields', () => {
+  it('should open invoice creation form with all required fields', () => {
     cy.visit('/invoice/create');
     cy.wait(2000);
     cy.url().should('include', '/invoice/create');
@@ -53,7 +53,7 @@ describe('Invoice Management', () => {
     cy.contains(/total/i).should('exist');
   });
 
-  it.skip('should add invoice line items and calculate totals correctly', () => {
+  it('should add invoice line items and calculate totals correctly', () => {
     cy.visit('/invoice/create');
     cy.wait(3000);
     
@@ -107,7 +107,7 @@ describe('Invoice Management', () => {
     cy.get('body').contains(/total|subtotal/i).should('exist');
   });
 
-  it.skip('should validate required fields when creating invoice', () => {
+  it('should validate required fields when creating invoice', () => {
     cy.visit('/invoice/create');
     cy.wait(3000);
     
@@ -213,7 +213,7 @@ describe('Invoice Management', () => {
     });
   });
 
-  it.skip('should filter invoices by payment status', () => {
+  it('should filter invoices by payment status', () => {
     cy.wait(1000);
     
     // Look for status filter dropdown
@@ -236,7 +236,7 @@ describe('Invoice Management', () => {
     });
   });
 
-  it.skip('should navigate back to dashboard', () => {
+  it('should navigate back to dashboard', () => {
     cy.visit('/');
     cy.wait(1000);
     cy.url().should('match', /\/$|\/dashboard/);
@@ -244,7 +244,7 @@ describe('Invoice Management', () => {
 
   // Tax Management Tests
   describe('Tax Management', () => {
-    it.skip('should display tax list page with table', () => {
+    it('should display tax list page with table', () => {
       cy.visit('/taxes');
       cy.wait(2000);
       cy.url().should('include', '/taxes');
@@ -257,92 +257,75 @@ describe('Invoice Management', () => {
       cy.get('.ant-table-thead th').should('have.length.greaterThan', 2);
     });
 
-    it.skip('should open add new tax form with required fields', () => {
+    it('should open add new tax form with required fields', () => {
       cy.visit('/taxes');
       cy.wait(2000);
       
-      // Click Add New Tax button
-      cy.contains('button', /add new tax/i).click();
-      cy.wait(1000);
+      // Click "Add New Tax" button
+      cy.contains('button', 'Add New Tax').click();
+      cy.wait(2000);
       
-      // Verify form fields are visible (actual IDs from form)
-      cy.get('input#taxName').should('be.visible');
+      // Wait for form to be visible in the panel
+      cy.get('input#taxName', { timeout: 10000 }).should('be.visible');
       cy.get('input#taxValue').should('be.visible');
       
       // Verify toggles for Enabled and Default exist
       cy.get('button[role="switch"]').should('have.length.greaterThan', 0);
       
       // Verify Submit button exists
-      cy.contains('button', 'Submit').should('be.visible');
+      cy.get('button[type="primary"]').contains('Submit').should('be.visible');
     });
 
-    // SKIPPED: Tax form button is not reliably accessible in headless mode
-    // The "Add New Tax" button selector finds multiple elements
-    it.skip('should create a new tax rate successfully', () => {
-      // Go directly to taxes page - the Add New Tax button is actually a page-level button
+    it('should create a new tax rate successfully', () => {
       cy.visit('/taxes');
       cy.wait(2000);
       
       const taxData = {
-        name: 'Test Tax ' + Date.now(),
+        name: 'TestTax' + Date.now(),
         value: '15'
       };
       
-      // Look for "+ Add New" button at page level (not in dropdown)
-      cy.get('body').then($body => {
-        // Try different button selectors that might exist
-        if ($body.find('button:contains("Add")').length > 0) {
-          cy.contains('button', 'Add').first().click();
-        } else if ($body.find('.ant-btn').length > 0) {
-          cy.get('.ant-btn').first().click();
-        }
-      });
+      // Click "Add New Tax" button
+      cy.contains('button', 'Add New Tax').click();
       cy.wait(2000);
       
-      // Fill form fields
-      cy.get('input#taxName').should('exist').clear({ force: true }).type(taxData.name, { force: true });
-      cy.get('input#taxValue').should('exist').clear({ force: true }).type(taxData.value, { force: true });
+      // Wait for form and fill tax name
+      cy.get('input#taxName', { timeout: 10000 }).should('be.visible').clear().type(taxData.name);
+      cy.wait(300);
       
-      // Submit form
-      cy.contains('button', 'Submit').click();
-      cy.wait(3000);
+      // Fill tax value
+      cy.get('input#taxValue').should('be.visible').clear().type(taxData.value);
+      cy.wait(300);
+      
+      // Click Submit button
+      cy.get('button[type="primary"]').contains('Submit').click();
+      cy.wait(2000);
       
       // Verify tax appears in list
-      cy.visit('/taxes');
-      cy.wait(2000);
-      cy.contains(taxData.name).should('exist');
+      cy.get('.ant-table-tbody').should('contain', taxData.name);
     });
 
-    // SKIPPED: Tax form button is not reliably accessible in headless mode
-    // The "Add New Tax" button selector finds multiple elements
-    it.skip('should validate required fields in tax form', () => {
-      // Go directly to taxes page
+    it('should validate required fields in tax form', () => {
       cy.visit('/taxes');
       cy.wait(2000);
       
-      // Look for Add button at page level
-      cy.get('body').then($body => {
-        if ($body.find('button:contains("Add")').length > 0) {
-          cy.contains('button', 'Add').first().click();
-        } else if ($body.find('.ant-btn').length > 0) {
-          cy.get('.ant-btn').first().click();
-        }
-      });
+      // Click "Add New Tax" button
+      cy.contains('button', 'Add New Tax').click();
       cy.wait(2000);
       
-      // Clear required fields
-      cy.get('input#taxName').clear({ force: true });
-      cy.get('input#taxValue').clear({ force: true });
+      // Wait for form to be visible
+      cy.get('input#taxName', { timeout: 10000 }).should('be.visible');
       
-      // Try to submit empty form
-      cy.contains('button', 'Submit').click();
-      cy.wait(1000);
+      // Try to submit empty form without filling required fields
+      cy.get('button[type="primary"]').contains('Submit').click();
+      cy.wait(500);
       
       // Form should still be visible (validation prevents submission)
       cy.get('input#taxName').should('be.visible');
+      cy.get('input#taxValue').should('be.visible');
     });
 
-    it.skip('should show tax options in invoice creation form', () => {
+    it('should show tax options in invoice creation form', () => {
       cy.visit('/invoice/create');
       cy.wait(3000);
       
@@ -359,7 +342,7 @@ describe('Invoice Management', () => {
       });
     });
 
-    it.skip('should apply tax to invoice calculations', () => {
+    it('should apply tax to invoice calculations', () => {
       cy.visit('/invoice/create');
       cy.wait(3000);
       
@@ -393,31 +376,38 @@ describe('Invoice Management', () => {
       cy.contains(/total|subtotal/i).should('exist');
     });
 
-    it.skip('should edit existing tax rate', () => {
+    it('should edit existing tax rate', () => {
       cy.visit('/taxes');
       cy.wait(2000);
       
       // Check if taxes exist
-      cy.get('body').then($body => {
-        if ($body.find('.ant-table-tbody tr:not(.ant-table-measure-row)').length > 0) {
+      cy.get('.ant-table-tbody tr:not(.ant-table-measure-row)').then($rows => {
+        if ($rows.length > 0) {
           // Click ellipsis menu on first tax
           cy.get('.ant-table-tbody tr:not(.ant-table-measure-row)').first().within(() => {
-            cy.get('.anticon-ellipsis').click({ force: true });
+            cy.get('.anticon-ellipsis').click();
           });
-          
           cy.wait(500);
           
-          // Click edit option from dropdown
-          cy.contains('Edit').click({ force: true });
+          // Click Edit option
+          cy.contains('Edit').click();
           cy.wait(1000);
           
-          // Verify form opened with correct fields
-          cy.get('input#taxName').should('be.visible');
+          // Wait for form and modify value
+          cy.get('input#taxValue', { timeout: 10000 }).should('be.visible').clear().type('20');
+          cy.wait(500);
+          
+          // Save changes
+          cy.get('button[type="primary"]').contains('Submit').click();
+          cy.wait(2000);
+          
+          // Verify update
+          cy.get('.ant-table-tbody').should('contain', '20');
         }
       });
     });
 
-    it.skip('should delete a tax rate', () => {
+    it('should delete a tax rate', () => {
       cy.visit('/taxes');
       cy.wait(2000);
       

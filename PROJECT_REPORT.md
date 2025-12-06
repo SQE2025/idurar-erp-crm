@@ -13,9 +13,9 @@
 This project implements a comprehensive CI/CD pipeline with automated testing for the IDURAR ERP CRM application, covering all stages from source control to production deployment. The implementation includes white-box and black-box testing techniques, multiple testing tools, and complete documentation.
 
 ### Team Members
-- [Your Name]
-- [Team Member 2]
-- [Team Member 3]
+- Ahmed Javaid
+- [Team Member 2 - Add Name]
+- [Team Member 3 - Add Name]
 
 ---
 
@@ -89,47 +89,52 @@ Comprehensive test plan following IEEE 829 standard including:
 **Location:** `backend/tests/api.test.js`
 
 **Coverage:**
-- Authentication API (login, logout, token validation)
-- Customer CRUD operations
-- Invoice management
-- Payment recording
-- API endpoint testing
+- Authentication API (data validation)
+- Customer CRUD operations (structure validation)
+- Invoice management (calculation logic)
+- Payment recording (data formats)
+- Data validation (emails, phones, numbers)
 
 **Test Statistics:**
-- Total Test Cases: 30+
-- Test Coverage: Target 80%+
+- Total Test Cases: 28
+- Test Type: Unit tests (white-box)
+- Status: All passing ✅
 - Execution Time: < 2 minutes
-
-#### Frontend UI Tests
-**Location:** `tests/cypress/e2e/ui-tests.cy.js`
+#### Backend Integration Tests
+**Location:** `backend/tests/api.integration.test.js`
 
 **Coverage:**
-- Authentication flows
-- Dashboard functionality
-- Customer management UI
-- Invoice creation and editing
-- Quote management
-- Payment recording
-- Responsive design testing
-- Accessibility testing
+- Real API endpoint testing with Supertest
+- Authentication endpoints
+- Customer API endpoints
+- Invoice API endpoints
+- Payment API endpoints
+- Error handling and CORS
 
 **Test Statistics:**
-- Total Test Cases: 45+
-- Browsers Tested: Chrome, Firefox, Edge
-- Viewports: Mobile, Tablet, Desktop
+- Total Test Cases: 15
+- Test Type: Integration tests (API calls)
+- Status: All passing ✅
 
-#### Performance Tests
-**Location:** `tests/performance/`
+#### Frontend UI Tests (Cypress)
+#### Frontend UI Tests (Cypress)
+**Location:** `tests/cypress/e2e/`
 
-**Files:**
-- `load-test.js` - Normal load testing
-- `stress-test.js` - Stress testing
+**Coverage:**
+- Authentication flows (smoke.cy.js, 01-authentication.cy.js)
+- Dashboard functionality (02-dashboard.cy.js)
+- Customer management UI (03-customer.cy.js)
+- Invoice creation and editing (04-invoice.cy.js)
+- Quote management (05-quote.cy.js)
+- Payment recording (06-payment.cy.js)
+- Settings (07-settings.cy.js)
+- Responsive design testing
 
-**Metrics Tested:**
-- Response time (p95 < 500ms)
-- Throughput (requests/second)
-- Error rate (< 1%)
-- Concurrent users: Up to 300
+**Test Statistics:**
+- Total Test Files: 8
+- Total Test Cases: 44 (optimized from 356+)
+- Key Tests: Smoke (4), Authentication (6), Dashboard (5), Customer (6), Invoice (7)
+- Pass Rate: Smoke tests 100% ✅, E2E ~60-70% (some selector issues)
 
 ### 4. Deployment Instructions ✅
 **Location:** `docs/DEPLOYMENT_GUIDE.md`
@@ -380,7 +385,12 @@ k6 run performance/load-test.js
 - **Nginx** - Web server and reverse proxy
 
 ### Monitoring Tools
-- **New Relic** - Application performance monitoring
+**Configuration Ready:**
+- Sentry error tracking (configuration documented)
+- New Relic APM (configuration documented)
+- Monitoring setup requires production environment and API keys
+
+**Note:** Monitoring integration is documented and configured, ready for deployment with actual infrastructure.
 - **Sentry** - Error tracking and monitoring
 - **Docker Stats** - Container metrics
 
@@ -560,14 +570,14 @@ k6 run performance/load-test.js
 | Criteria | Weight | Achievement | Evidence |
 |----------|--------|-------------|----------|
 | Test Plan Quality | 20% | ✅ Excellent | Comprehensive IEEE 829 plan with 75+ test cases |
-| Test Coverage | 20% | ✅ Excellent | 80%+ code coverage, all features tested |
-| Tool Integration | 15% | ✅ Excellent | Jenkins, GitHub Actions, multiple testing tools |
-| Test Execution | 15% | ✅ Excellent | Automated pipeline, 95%+ pass rate |
-| Documentation | 10% | ✅ Excellent | Complete test plan, deployment guide, README |
-| Deployment Success | 10% | ✅ Excellent | Multi-stage deployment with monitoring |
-| Team Collaboration | 10% | ✅ Excellent | Clear contribution tracking, timely delivery |
+| Test Coverage | 20% | ✅ Good | 87 automated tests (28 unit + 15 integration + 44 E2E) |
+| Tool Integration | 15% | ✅ Excellent | Jenkins, GitHub Actions, Cypress, Jest, Supertest |
+| Test Execution | 15% | ✅ Good | All backend tests pass, smoke tests pass, E2E partially working |
+| Documentation | 10% | ✅ Excellent | Complete test plan, deployment guide, reports |
+| Deployment Success | 10% | ⚠️ Partial | Configs ready, needs infrastructure for actual deployment |
+| Team Collaboration | 10% | ✅ Good | Clear documentation, organized structure, progress tracking |
 
-**Expected Grade:** A / A+
+**Expected Grade:** B+ to A- (85-92/100)
 
 ---
 
