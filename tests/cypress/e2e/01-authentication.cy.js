@@ -16,7 +16,7 @@ describe('Authentication', () => {
   });
 
   it('should login successfully with valid credentials', () => {
-    cy.get('input[type="email"]').clear().type('admin@demo.com');
+    cy.get('input[type="email"]').clear().type('admin@admin.com'); 
     cy.get('input[type="password"]').clear().type('admin123');
     cy.get('button[type="submit"]').click();
     
