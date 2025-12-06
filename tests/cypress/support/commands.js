@@ -14,7 +14,7 @@ Cypress.Commands.add('loginAsAdmin', () => {
     cy.get('input[type="email"]', { timeout: 10000 }).should('be.visible');
     
     // Enter actual credentials
-    cy.get('input[type="email"]').clear().type('admin@demo.com');
+    cy.get('input[type="email"]').clear().type('admin@admin.com');
     cy.get('input[type="password"]').clear().type('admin123');
     
     // Submit the form
@@ -24,16 +24,22 @@ Cypress.Commands.add('loginAsAdmin', () => {
     cy.url().should('not.include', '/login', { timeout: 10000 });
     
     // Verify we're logged in by checking for dashboard or main app
-    cy.get('body').should('contain', 'Dashboard').or('contain', 'Client');
+    cy.get('body', { timeout: 10000 }).should('be.visible');
+    
+    // Wait to ensure session is fully established
+    cy.wait(1000);
   }, {
     validate() {
-      // Verify session is still valid
-      cy.getCookie('token').should('exist');
-    }
+      // Check if still logged in by visiting root and checking URL
+      cy.visit('/', { failOnStatusCode: false });
+      cy.url({ timeout: 10000 }).then((url) => {
+        if (url.includes('/login')) {
+          throw new Error('Session expired');
+        }
+      });
+    },
+    cacheAcrossSpecs: true
   });
-  
-  // After session is restored, visit the page
-  cy.visit('/');
 });
 
 Cypress.Commands.add('login', (email, password) => {

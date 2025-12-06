@@ -100,7 +100,7 @@ describe('Exploratory Testing: Edge Cases & Boundary Values', () => {
         cy.get('input#email').clear().type(`special${index}@test.com`);
         cy.get('input#phone').clear().type(`+123456789${index}`);
         
-        cy.contains('button', /submit/i).click();
+        cy.get('button[type="submit"].ant-btn-primary').filter(':visible').first().click();
         cy.wait(2000);
 
         // Verify creation succeeded
@@ -125,7 +125,7 @@ describe('Exploratory Testing: Edge Cases & Boundary Values', () => {
         cy.get('input#email').clear().type(`xss${index}@test.com`);
         cy.get('input#phone').clear().type(`+98765432${index}`);
         
-        cy.contains('button', /submit/i).click();
+        cy.get('button[type="submit"].ant-btn-primary').filter(':visible').first().click();
         cy.wait(2000);
 
         // Visit list and verify payload is escaped (shown as text, not executed)
@@ -151,7 +151,7 @@ describe('Exploratory Testing: Edge Cases & Boundary Values', () => {
       cy.get('input#email').invoke('val', longEmail).trigger('change');
       cy.get('input#phone').invoke('val', longPhone).trigger('change');
       
-      cy.contains('button', /submit/i).click();
+      cy.get('button[type="submit"].ant-btn-primary').filter(':visible').first().click();
       cy.wait(2000);
 
       // Should either accept (if no limits) or show validation error
@@ -168,7 +168,7 @@ describe('Exploratory Testing: Edge Cases & Boundary Values', () => {
       cy.get('input#phone').type('+1234567890');
       
       // Click submit button multiple times rapidly
-      cy.contains('button', /submit/i).click().click().click();
+      cy.get('button[type="submit"].ant-btn-primary').filter(':visible').first().click().click().click();
       cy.wait(3000);
 
       // Should only create ONE customer, not multiple
