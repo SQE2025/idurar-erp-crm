@@ -16,13 +16,13 @@ describe('Authentication', () => {
   });
 
   it('should login successfully with valid credentials', () => {
-    cy.get('input[type="email"]').clear().type('admin@demo.com');
+    cy.get('input[type="email"]').clear().type('admin@admin.com');
     cy.get('input[type="password"]').clear().type('admin123');
     cy.get('button[type="submit"]').click();
-    
+
     // Should redirect away from login
     cy.url().should('not.include', '/login', { timeout: 10000 });
-    
+
     // Should show dashboard or main content
     cy.get('body').should('be.visible');
   });
@@ -38,7 +38,7 @@ describe('Authentication', () => {
     // Empty fields
     cy.get('button[type="submit"]').click();
     cy.url().should('include', '/login');
-    
+
     // Invalid email format
     cy.visit('/login');
     cy.get('input[type="email"]').type('notanemail');
@@ -58,7 +58,7 @@ describe('Authentication', () => {
     cy.get('input[type="password"]').clear().type('admin123');
     cy.get('button[type="submit"]').click();
     cy.wait(2000);
-    
+
     // Look for logout button/menu (adjust selector based on actual UI)
     cy.get('body').then($body => {
       if ($body.find('[data-cy="logout"]').length > 0) {
