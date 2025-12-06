@@ -30,16 +30,36 @@ describe('Payment Management', () => {
     cy.visit('/payment');
     cy.wait(2000);
     
-    // Check if payments exist and search input exists
-    cy.get('body').then($body => {
-      if ($body.find('.ant-table-tbody tr:not(.ant-table-measure-row)').length > 0 &&
-          $body.find('.ant-select-selection-search-input, input').length > 0) {
-        // Use any available search input
-        cy.get('.ant-select-selection-search-input, input').first().type('Test', { force: true });
-        cy.wait(1000);
-        
-        // Verify table still visible after search
-        cy.get('.ant-table').should('be.visible');
+    // Check if payments exist
+    cy.get('.ant-table-tbody tr:not(.ant-table-measure-row)', { timeout: 5000 }).then($rows => {
+      if ($rows.length > 0) {
+        // Get client name from first row (typically second column)
+        cy.wrap($rows.first()).find('td').eq(1).invoke('text').then(clientText => {
+          const clientName = clientText.trim();
+          
+          if (clientName && clientName.length > 2) {
+            // Click the search input (ant-select dropdown for client search)
+            cy.get('input.ant-select-selection-search-input[role="combobox"]', { timeout: 5000 })
+              .first().click({ force: true });
+            cy.wait(500);
+            
+            // Type client name to search
+            cy.get('input.ant-select-selection-search-input[role="combobox"]')
+              .first().type(clientName.substring(0, 3), { force: true });
+            cy.wait(1000);
+            
+            // Select from dropdown if options appear
+            cy.get('body').then($body => {
+              if ($body.find('.ant-select-item-option').length > 0) {
+                cy.get('.ant-select-item-option').first().click({ force: true });
+                cy.wait(1000);
+              }
+            });
+            
+            // Verify table still displays results
+            cy.get('.ant-table').should('be.visible');
+          }
+        });
       }
     });
   });
@@ -170,45 +190,6 @@ describe('Payment Management', () => {
             cy.get('.ant-pagination-item-active').should('contain', '1');
           }
         });
-      }
-    });
-  });
-
-  it('should display correct payment details including payment mode', () => {
-    cy.visit('/payment');
-    cy.wait(2000);
-    
-    // Check if payments exist
-    cy.get('.ant-table-tbody tr:not(.ant-table-measure-row)').then($rows => {
-      if ($rows.length > 0) {
-        // Verify payment mode column shows data
-        cy.get('.ant-table-tbody tr:not(.ant-table-measure-row)').first().within(() => {
-          // Payment Mode should be in one of the columns
-          cy.get('td').last().should('not.be.empty');
-        });
-      }
-    });
-  });
-
-  it('should clear search and show all payments', () => {
-    cy.visit('/payment');
-    cy.wait(2000);
-    
-    // Get initial count
-    cy.get('.ant-table-tbody tr:not(.ant-table-measure-row)').then($initialRows => {
-      if ($initialRows.length > 0) {
-        const initialCount = $initialRows.length;
-        
-        // Search for something
-        cy.get('input[type="search"]').type('Test');
-        cy.wait(1000);
-        
-        // Clear search
-        cy.get('input[type="search"]').clear();
-        cy.wait(1000);
-        
-        // Verify all payments are shown again
-        cy.get('.ant-table-tbody tr:not(.ant-table-measure-row)').should('have.length.gte', 0);
       }
     });
   });

@@ -46,37 +46,73 @@ describe('Payment Mode Management', () => {
     });
   });
 
-  it('should create a new payment mode successfully', () => {
-    cy.visit('/payment/mode');
-    cy.wait(2000);
-    
-    const paymentModeData = {
-      name: 'TestMode' + Date.now(),
-      description: 'Test payment mode description'
-    };
-    
-    // Click "Add New Payment Mode" button
-    cy.contains('button', 'Add New Payment Mode').click();
-    cy.wait(2000);
-    
-    // Wait for drawer and fill form within open drawer
-    cy.get('.ant-drawer.ant-drawer-open .ant-drawer-content', { timeout: 10000 }).should('be.visible').within(() => {
+ it('should create a new payment mode successfully', () => {
+  cy.visit('/payment/mode');
+  cy.wait(2000);
+
+  const paymentModeData = {
+    name: 'TestMode' + Date.now(),
+    description: 'Test payment mode description'
+  };
+
+  // Click "Add New Payment Mode" button
+  cy.contains('button', /Add New Payment Mode/i, { timeout: 10000 }).click();
+  cy.wait(1000);
+
+  // Wait for drawer to open and fill the form
+  cy.get('.ant-drawer.ant-drawer-open .ant-drawer-content', { timeout: 10000 })
+    .should('be.visible')
+    .within(() => {
       // Fill payment mode name
-      cy.get('input#name').type(paymentModeData.name, { delay: 50 });
-      cy.wait(300);
-      
+      cy.get('input#name')
+        .clear()
+        .type(paymentModeData.name, { delay: 50 });
+      cy.wait(200);
+
       // Fill description
-      cy.get('input#description').type(paymentModeData.description, { delay: 50 });
-      cy.wait(300);
-      
+      cy.get('input#description')
+        .clear()
+        .type(paymentModeData.description, { delay: 50 });
+      cy.wait(200);
+
       // Click Submit button
-      cy.get('button.ant-btn.ant-btn-primary').click();
+      cy.get('button.ant-btn.ant-btn-primary')
+        .filter(':visible')
+        .first()
+        .click();
     });
-    cy.wait(3000);
-    
-    // Verify payment mode appears in list
-    cy.get('.ant-table-tbody').should('contain', paymentModeData.name);
-  });
+
+  cy.wait(3000); // wait for submission + table reload
+
+  // Verify payment mode appears in list, accounting for potential pagination
+  function findPaymentModeInPages(name) {
+    cy.get('.ant-table-tbody', { timeout: 8000 }).then($tbody => {
+      if ($tbody.text().includes(name)) {
+        cy.log(`✔ Found payment mode on this page: ${name}`);
+        return;
+      }
+
+      // Check if "Next" button is disabled → last page
+      cy.get('.ant-pagination-next').then($nextBtn => {
+        const isDisabled = $nextBtn.hasClass('ant-pagination-disabled');
+
+        if (isDisabled) {
+          throw new Error(`❌ Payment mode NOT found in any page: ${name}`);
+        }
+
+        // Go to next page
+        cy.wrap($nextBtn).click();
+        cy.get('.ant-table-row', { timeout: 8000 }).should('exist');
+
+        // Recursive search on next page
+        findPaymentModeInPages(name);
+      });
+    });
+  }
+
+  findPaymentModeInPages(paymentModeData.name);
+});
+
 
   it('should validate required fields in payment mode form', () => {
     cy.visit('/payment/mode');

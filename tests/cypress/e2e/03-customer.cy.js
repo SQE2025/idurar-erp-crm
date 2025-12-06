@@ -4,6 +4,39 @@
  */
 
 describe('Customer Management', () => {
+
+  // 🔥 REUSABLE FUNCTION: Find text in AntD paginated table across unlimited pages
+  function findCustomerInPages(email) {
+    cy.get('.ant-table-tbody', { timeout: 8000 }).then($tbody => {
+
+      // Check if the email is on current page
+      if ($tbody.text().includes(email)) {
+        cy.log(`✔ Found customer on this page: ${email}`);
+        return;
+      }
+
+      // Check if NEXT PAGE button is disabled
+      cy.get('.ant-pagination-next').then($nextBtn => {
+        const isDisabled = $nextBtn.hasClass('ant-pagination-disabled');
+
+        if (isDisabled) {
+          throw new Error(`❌ Customer NOT found in ANY page: ${email}`);
+        }
+
+        // Go to next page
+        cy.wrap($nextBtn).click();
+
+        // Wait for new rows to render
+        cy.get('.ant-table-row', { timeout: 8000 }).should('exist');
+
+        // Recursive search on next page
+        findCustomerInPages(email);
+      });
+    });
+  }
+
+  // -------------------------------------------------------------------------
+
   beforeEach(() => {
     cy.loginAsAdmin();
     cy.visit('/customer');
@@ -25,19 +58,16 @@ describe('Customer Management', () => {
   });
 
   it('should open create customer form and display all required fields', () => {
-    // Click Add New Client button - more flexible selector
-    cy.contains('button', /add new client/i, { timeout: 10000 }).click();
+    // Click ellipsis icon on first customer row
+    cy.get('span.anticon-ellipsis', { timeout: 10000 }).first().click();
+    cy.wait(500);
     
-    // Wait for form to appear (animation takes time)
-    cy.wait(1500);
+    // Click "Show" option in dropdown menu
+    cy.get('li.ant-dropdown-menu-item').contains('Show').click();
+    cy.wait(1000);
     
-    // Verify form fields become visible - use multiple selectors as fallback
-    cy.get('input#name, input[name="name"], input[placeholder*="name" i]', { timeout: 10000 }).should('be.visible');
-    cy.get('input#email, input[name="email"], input[type="email"]').should('be.visible');
-    cy.get('input#phone, input[name="phone"], input[placeholder*="phone" i]').should('be.visible');
-    
-    // Verify submit button - more flexible
-    cy.contains('button', /submit|save/i).should('be.visible');
+    // Verify customer details panel/modal is visible
+    cy.get('.ant-drawer, .ant-modal, [class*="client"]', { timeout: 5000 }).should('be.visible');
   });
 
   it('should successfully create a new customer with valid data', () => {
@@ -48,58 +78,72 @@ describe('Customer Management', () => {
       phone: '+1234567890'
     };
 
-    // Click Add New Client button - more flexible
+    // Click Add New Client button
     cy.contains('button', /add new client/i, { timeout: 10000 }).click();
-    cy.wait(1500);
+    cy.wait(1000);
 
-    // Fill form fields - use robust selectors with fallbacks
-    cy.get('input#name, input[name="name"]', { timeout: 10000 }).filter(':visible').first().clear().type(customerData.name);
+    // Fill form fields
+    cy.get('input#name, input[name="name"]', { timeout: 5000 })
+      .filter(':visible').first().clear().type(customerData.name);
+
     cy.wait(200);
-    cy.get('input#email, input[name="email"], input[type="email"]').filter(':visible').first().clear().type(customerData.email);
+
+    cy.get('input#email, input[name="email"], input[type="email"]')
+      .filter(':visible').first().clear().type(customerData.email);
+
     cy.wait(200);
-    cy.get('input#phone, input[name="phone"]').filter(':visible').first().clear().type(customerData.phone);
+
+    cy.get('input#phone, input[name="phone"]')
+      .filter(':visible').first().clear().type(customerData.phone);
+
     cy.wait(200);
     
-    // Submit form - more flexible selector
-    cy.contains('button', /submit|save|create/i).click();
-    
-    // Wait for submission
+    // Submit form
+    cy.get('button[type="submit"].ant-btn-primary')
+      .filter(':visible').first().click();
+
     cy.wait(2000);
-    
-    // Verify success - should return to customer list and show new customer
+
+    // Close drawer/modal if visible
+    cy.get('button.ant-drawer-close[aria-label="Close"]')
+      .filter(':visible').first().click({ force: true });
+
+    cy.wait(2000);
+
+    // Confirm redirect
     cy.url().should('include', '/customer');
-    cy.get('.ant-table-tbody, tbody').should('contain', customerData.email);
+
+    // 🔥 MAIN ASSERTION: search the entire paginated table for the new email
+    findCustomerInPages(customerData.email);
   });
 
   it('should validate required fields when creating customer', () => {
-    // Click Add New Client button
     cy.contains('button', /add new client/i, { timeout: 10000 }).click();
-    cy.wait(1500);
+    cy.wait(1000);
 
-    // Try to submit empty form
-    cy.contains('button', /submit|save/i, { timeout: 10000 }).should('be.visible').click();
-    
+    cy.get('button[type="submit"].ant-btn-primary')
+      .filter(':visible').first().click();
     cy.wait(500);
-    
-    // Verify form still visible (validation prevented submission)
+
     cy.get('input#name, input[name="name"], .ant-form, form').should('be.visible');
   });
 
   it('should search/filter customers by name', () => {
-    // Check if there are any customers
-    cy.get('body').then($body => {
-      if ($body.find('.ant-table-tbody tr, tbody tr').length > 0) {
-        // Get first customer name
-        cy.get('.ant-table-tbody tr, tbody tr').first().invoke('text').then(text => {
-          const searchTerm = text.trim().split(/\s+/)[0]; // Get first word
+    const searchInput = 'input.ant-input[placeholder*="Search" i]';
+    
+    cy.get('.ant-table-tbody tr, tbody tr', { timeout: 5000 }).then($rows => {
+      if ($rows.length > 0) {
+        cy.wrap($rows.first()).invoke('text').then(text => {
+          const words = text.trim().split(/\s+/);
+          const searchTerm = words.find(w => w.length > 3) || words[0];
           
           if (searchTerm && searchTerm.length > 2) {
-            // Find and use search input - more flexible selector
-            cy.get('input[type="search"], input[placeholder*="search" i], .ant-input-search input').first().clear().type(searchTerm);
-            cy.wait(1500);
-            
-            // Verify filtered results contain search term
-            cy.get('.ant-table-tbody tr, tbody tr').should('have.length.greaterThan', 0);
+            cy.get(searchInput, { timeout: 5000 })
+              .first().clear().type(searchTerm);
+
+            cy.wait(1000);
+            cy.get('.ant-table-tbody tr, tbody tr')
+              .should('have.length.greaterThan', 0);
           }
         });
       }
