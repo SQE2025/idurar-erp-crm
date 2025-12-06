@@ -1,0 +1,16 @@
+# Cypress test artifacts
+archived/screenshots/
+archived/videos/
+archived/downloads/
+
+# Test results
+cypress/screenshots/
+cypress/videos/
+cypress/downloads/
+
+# Node modules
+node_modules/
+
+# Environment files
+.env
+.env.local

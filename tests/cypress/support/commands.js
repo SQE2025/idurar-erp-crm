@@ -2,6 +2,12 @@
 // Custom commands for authentication
 // ***********************************************
 
+Cypress.Commands.add('loginAsAdmin', () => {
+  cy.visit('/login');
+  cy.get('button[type="submit"]').click();
+  cy.wait(3000);
+});
+
 Cypress.Commands.add('login', (email, password) => {
   cy.session([email, password], () => {
     cy.visit('/login');

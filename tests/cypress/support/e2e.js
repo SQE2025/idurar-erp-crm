@@ -9,10 +9,8 @@ if (!app.document.head.querySelector('[data-hide-command-log-request]')) {
   app.document.head.appendChild(style);
 }
 
-// Preserve cookies between tests
-Cypress.Cookies.defaults({
-  preserve: ['connect.sid', 'token']
-});
+// Preserve session data between tests (Cypress 12+ syntax)
+// Use cy.session() in individual tests if you need session management
 
 // Global error handler
 Cypress.on('uncaught:exception', (err, runnable) => {
