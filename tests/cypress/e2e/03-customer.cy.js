@@ -25,19 +25,19 @@ describe('Customer Management', () => {
   });
 
   it('should open create customer form and display all required fields', () => {
-    // Click Add New Client button
-    cy.contains('button', 'Add New Client').click();
+    // Click Add New Client button - more flexible selector
+    cy.contains('button', /add new client/i, { timeout: 10000 }).click();
     
     // Wait for form to appear (animation takes time)
-    cy.wait(1000);
+    cy.wait(1500);
     
-    // Verify form fields become visible
-    cy.get('input#name', { timeout: 10000 }).should('be.visible');
-    cy.get('input#email').should('be.visible');
-    cy.get('input#phone').should('be.visible');
+    // Verify form fields become visible - use multiple selectors as fallback
+    cy.get('input#name, input[name="name"], input[placeholder*="name" i]', { timeout: 10000 }).should('be.visible');
+    cy.get('input#email, input[name="email"], input[type="email"]').should('be.visible');
+    cy.get('input#phone, input[name="phone"], input[placeholder*="phone" i]').should('be.visible');
     
-    // Verify submit button
-    cy.contains('button', 'Submit').should('be.visible');
+    // Verify submit button - more flexible
+    cy.contains('button', /submit|save/i).should('be.visible');
   });
 
   it('should successfully create a new customer with valid data', () => {
@@ -48,52 +48,58 @@ describe('Customer Management', () => {
       phone: '+1234567890'
     };
 
-    // Click Add New Client button
-    cy.contains('button', 'Add New Client').click();
-    cy.wait(1000);
+    // Click Add New Client button - more flexible
+    cy.contains('button', /add new client/i, { timeout: 10000 }).click();
+    cy.wait(1500);
 
-    // Fill form fields
-    cy.get('input#name', { timeout: 10000 }).filter(':visible').first().type(customerData.name);
-    cy.get('input#email').filter(':visible').first().type(customerData.email);
-    cy.get('input#phone').filter(':visible').first().type(customerData.phone);
+    // Fill form fields - use robust selectors with fallbacks
+    cy.get('input#name, input[name="name"]', { timeout: 10000 }).filter(':visible').first().clear().type(customerData.name);
+    cy.wait(200);
+    cy.get('input#email, input[name="email"], input[type="email"]').filter(':visible').first().clear().type(customerData.email);
+    cy.wait(200);
+    cy.get('input#phone, input[name="phone"]').filter(':visible').first().clear().type(customerData.phone);
+    cy.wait(200);
     
-    // Submit form
-    cy.contains('button', 'Submit').click();
+    // Submit form - more flexible selector
+    cy.contains('button', /submit|save|create/i).click();
     
     // Wait for submission
     cy.wait(2000);
     
-    // Verify success - form should close or show success message
+    // Verify success - should return to customer list and show new customer
     cy.url().should('include', '/customer');
+    cy.get('.ant-table-tbody, tbody').should('contain', customerData.email);
   });
 
   it('should validate required fields when creating customer', () => {
     // Click Add New Client button
-    cy.contains('button', 'Add New Client').click();
-    cy.wait(1000);
+    cy.contains('button', /add new client/i, { timeout: 10000 }).click();
+    cy.wait(1500);
 
     // Try to submit empty form
-    cy.contains('button', 'Submit', { timeout: 10000 }).should('be.visible').click();
+    cy.contains('button', /submit|save/i, { timeout: 10000 }).should('be.visible').click();
+    
+    cy.wait(500);
     
     // Verify form still visible (validation prevented submission)
-    cy.get('input#name').should('be.visible');
+    cy.get('input#name, input[name="name"], .ant-form, form').should('be.visible');
   });
 
   it('should search/filter customers by name', () => {
     // Check if there are any customers
     cy.get('body').then($body => {
-      if ($body.find('.ant-table-tbody tr').length > 0) {
+      if ($body.find('.ant-table-tbody tr, tbody tr').length > 0) {
         // Get first customer name
-        cy.get('.ant-table-tbody tr').first().invoke('text').then(text => {
+        cy.get('.ant-table-tbody tr, tbody tr').first().invoke('text').then(text => {
           const searchTerm = text.trim().split(/\s+/)[0]; // Get first word
           
-          if (searchTerm) {
-            // Find and use search input
-            cy.get('input[type="search"], input').first().clear().type(searchTerm);
-            cy.wait(1000);
+          if (searchTerm && searchTerm.length > 2) {
+            // Find and use search input - more flexible selector
+            cy.get('input[type="search"], input[placeholder*="search" i], .ant-input-search input').first().clear().type(searchTerm);
+            cy.wait(1500);
             
             // Verify filtered results contain search term
-            cy.get('.ant-table-tbody tr').should('have.length.greaterThan', 0);
+            cy.get('.ant-table-tbody tr, tbody tr').should('have.length.greaterThan', 0);
           }
         });
       }

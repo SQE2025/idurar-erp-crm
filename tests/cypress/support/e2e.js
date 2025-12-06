@@ -1,4 +1,5 @@
 import './commands';
+import './helpers';
 
 // Hide fetch/XHR requests in command log
 const app = window.top;
