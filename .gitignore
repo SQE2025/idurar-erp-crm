@@ -1,1 +1,7 @@
 docs/
+# Root artifacts
+/*.md
+!/README.md
+/*.png
+/*.svg
+.DS_Store
