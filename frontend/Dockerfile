@@ -33,4 +33,10 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s \
   CMD wget --quiet --tries=1 --spider http://localhost/ || exit 1
 
 # Start nginx
+# Copy entrypoint script
+COPY entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
+# Start nginx via entrypoint
+ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["nginx", "-g", "daemon off;"]
