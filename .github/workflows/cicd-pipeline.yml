@@ -95,20 +95,26 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
       
+      - name: Install Backend Dependencies
+        working-directory: ./backend
+        run: npm install
+      
       - name: Backend Unit Tests
         working-directory: ./backend/tests
         run: |
           npm install
           npm test || echo "Backend tests completed"
       
-      - name: Install Backend Dependencies
-        working-directory: ./backend
-        run: npm install
-      
       - name: Install Frontend Dependencies
         working-directory: ./frontend
         run: npm install
       
+      - name: Seed Database
+        working-directory: ./backend
+        run: npm run setup
+        env:
+          DATABASE: mongodb://localhost:27017/idurar_test
+          
       - name: Start Backend Server
         working-directory: ./backend
         run: |
