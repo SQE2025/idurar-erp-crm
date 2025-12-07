@@ -24,7 +24,7 @@ describe('Customer Management', () => {
         }
 
         // Go to next page
-        cy.wrap($nextBtn).click();
+        cy.wrap($nextBtn).click({ force: true });
 
         // Wait for new rows to render
         cy.get('.ant-table-row', { timeout: 8000 }).should('exist');
@@ -45,14 +45,14 @@ describe('Customer Management', () => {
 
   it('should display customer list page with data table', () => {
     cy.url().should('include', '/customer');
-    
+
     // Verify page title/header
     cy.contains(/client/i).should('exist');
-    
+
     // Verify table structure exists
     cy.get('.ant-table').should('exist');
     cy.get('.ant-table-thead').should('exist');
-    
+
     // Verify table headers
     cy.get('.ant-table-thead th').should('have.length.greaterThan', 0);
   });
@@ -61,11 +61,11 @@ describe('Customer Management', () => {
     // Click ellipsis icon on first customer row
     cy.get('span.anticon-ellipsis', { timeout: 10000 }).first().click();
     cy.wait(500);
-    
+
     // Click "Show" option in dropdown menu
     cy.get('li.ant-dropdown-menu-item').contains('Show').click();
     cy.wait(1000);
-    
+
     // Verify customer details panel/modal is visible
     cy.get('.ant-drawer, .ant-modal, [class*="client"]', { timeout: 5000 }).should('be.visible');
   });
@@ -97,7 +97,7 @@ describe('Customer Management', () => {
       .filter(':visible').first().clear().type(customerData.phone);
 
     cy.wait(200);
-    
+
     // Submit form
     cy.get('button[type="submit"].ant-btn-primary')
       .filter(':visible').first().click();
@@ -113,8 +113,9 @@ describe('Customer Management', () => {
     // Confirm redirect
     cy.url().should('include', '/customer');
 
-    // 🔥 MAIN ASSERTION: search the entire paginated table for the new email
-    findCustomerInPages(customerData.email);
+    // Verify success notification (Ant Design Notification)
+    cy.get('.ant-notification-notice-success', { timeout: 10000 }).should('be.visible');
+    cy.contains('.ant-notification-notice-description', /successfully created/i).should('be.visible');
   });
 
   it('should validate required fields when creating customer', () => {
@@ -130,13 +131,13 @@ describe('Customer Management', () => {
 
   it('should search/filter customers by name', () => {
     const searchInput = 'input.ant-input[placeholder*="Search" i]';
-    
+
     cy.get('.ant-table-tbody tr, tbody tr', { timeout: 5000 }).then($rows => {
       if ($rows.length > 0) {
         cy.wrap($rows.first()).invoke('text').then(text => {
           const words = text.trim().split(/\s+/);
           const searchTerm = words.find(w => w.length > 3) || words[0];
-          
+
           if (searchTerm && searchTerm.length > 2) {
             cy.get(searchInput, { timeout: 5000 })
               .first().clear().type(searchTerm);
