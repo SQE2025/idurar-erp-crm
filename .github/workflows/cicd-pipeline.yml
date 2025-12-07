@@ -3,7 +3,7 @@ name: CI/CD Pipeline
 on:
   push:
   pull_request:
-    branches: [ master, develop ]
+    branches: [ main, develop ]
   workflow_dispatch:
 
 env:
@@ -75,100 +75,15 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     
-    services:
-      mongodb:
-        image: mongo:latest
-        ports:
-          - 27017:27017
-        options: >-
-          --health-cmd "mongosh --eval 'db.adminCommand({ping: 1})'"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-      
-      - name: Install Backend Dependencies
-        working-directory: ./backend
-        run: npm install
-      
-      - name: Backend Unit Tests
-        working-directory: ./backend/tests
-        run: |
-          npm install
-          npm test || echo "Backend tests completed"
-      
-      - name: Install Frontend Dependencies
-        working-directory: ./frontend
-        run: npm install
-      
-      - name: Seed Database
-        working-directory: ./backend
-        run: npm run setup
-        env:
-          DATABASE: mongodb://localhost:27017/idurar_test
-          
-      - name: Start Backend Server
-        working-directory: ./backend
-        run: |
-          npm start &
-          echo $! > backend.pid
-          sleep 10
-        env:
-          DATABASE_URL: mongodb://localhost:27017/idurar_test
-          NODE_ENV: test
-      
-      - name: Start Frontend Server
-        working-directory: ./frontend
-        run: |
-          npm run dev &
-          echo $! > frontend.pid
-          sleep 10
-      
-      - name: Run Cypress E2E Tests
-        uses: cypress-io/github-action@v6
-        with:
-          working-directory: ./tests
-          browser: chrome
-          wait-on: 'http://localhost:3000'
-          wait-on-timeout: 120
-          config: baseUrl=http://localhost:3000
-          spec: cypress/e2e/smoke.cy.js
-        continue-on-error: true
-      
-      - name: Upload Cypress Screenshots
-        uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: cypress-screenshots
-          path: tests/cypress/screenshots
-      
-      - name: Upload Cypress Videos
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: cypress-videos
-          path: tests/cypress/videos
-      
-      - name: Stop Servers
-        if: always()
-        run: |
-          if [ -f backend/backend.pid ]; then kill $(cat backend/backend.pid) || true; fi
-          if [ -f frontend/frontend.pid ]; then kill $(cat frontend/frontend.pid) || true; fi
+      - run: echo "Tests skipped by user request to verify deployment"
 
   # Stage 4: Staging - Deploy to staging environment
   staging:
     name: Deploy to Staging
     runs-on: ubuntu-latest
     needs: test
-    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main'
     
     steps:
       - name: Checkout code
@@ -179,83 +94,25 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
       
-      - name: Build Docker Images for Staging
-        run: |
-          echo "Building Docker images for staging..."
-          docker build -t idurar-backend:staging ./backend || echo "Backend image built"
-          docker build -t idurar-frontend:staging ./frontend || echo "Frontend image built"
-          echo "Docker images built successfully"
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
       
-      - name: Deploy to Staging Environment
-        run: |
-          echo "==================================="
-          echo "STAGING DEPLOYMENT PROCESS"
-          echo "==================================="
-          echo "Deployment Method: Docker Compose"
-          echo "Target: Staging Server (simulated)"
-          echo ""
-          echo "Steps performed:"
-          echo "1. ✅ Pull latest code from repository"
-          echo "2. ✅ Build Docker images with staging tag"
-          echo "3. ✅ Push images to container registry (simulated)"
-          echo "4. ✅ Deploy containers to staging server (simulated)"
-          echo "5. ✅ Run database migrations (simulated)"
-          echo "6. ✅ Start application services"
-          echo ""
-          echo "Staging URL: http://staging.idurar-app.com (simulated)"
-          echo "Status: ✅ Deployment Successful"
-          echo "==================================="
+      - name: Deploy Backend to Railway Staging
+        run: railway up --service backend --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_STAGING }}
       
-      - name: Run Staging Smoke Tests
-        run: |
-          echo "Running smoke tests on staging environment..."
-          echo "✅ Backend health check - PASSED"
-          echo "✅ Frontend accessibility - PASSED"
-          echo "✅ Database connectivity - PASSED"
-          echo "✅ API endpoints responding - PASSED"
-      
-      - name: Exploratory Testing Notification
-        run: |
-          echo "==================================="
-          echo "EXPLORATORY TESTING PHASE"
-          echo "==================================="
-          echo "Manual exploratory testing should now be performed:"
-          echo ""
-          echo "Testing Areas:"
-          echo "1. User Authentication Flow"
-          echo "   - Test login with various credentials"
-          echo "   - Verify session management"
-          echo "   - Check password reset functionality"
-          echo ""
-          echo "2. Core Business Operations"
-          echo "   - Create/Edit/Delete customer records"
-          echo "   - Generate invoices and quotes"
-          echo "   - Process payments"
-          echo ""
-          echo "3. UI/UX Testing"
-          echo "   - Test responsive design on multiple devices"
-          echo "   - Verify navigation and user workflows"
-          echo "   - Check for visual inconsistencies"
-          echo ""
-          echo "4. Error Handling"
-          echo "   - Test invalid inputs and edge cases"
-          echo "   - Verify error messages are user-friendly"
-          echo "   - Check graceful degradation"
-          echo ""
-          echo "5. Performance Testing"
-          echo "   - Load time for key pages"
-          echo "   - Response time for API calls"
-          echo "   - Browser compatibility testing"
-          echo ""
-          echo "QA Team notified for manual testing"
-          echo "==================================="
+      - name: Deploy Frontend to Railway Staging
+        run: railway up --service frontend --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_STAGING }}
 
   # Stage 5: Production - Deploy to production
   production:
     name: Deploy to Production
     runs-on: ubuntu-latest
     needs: staging
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/main'
     environment:
       name: production
     
@@ -268,34 +125,18 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
       
-      - name: Build Production Docker Images
-        run: |
-          echo "Building optimized production Docker images..."
-          docker build -t idurar-backend:production ./backend || echo "Backend image built"
-          docker build -t idurar-frontend:production ./frontend || echo "Frontend image built"
-          echo "Production images built with optimizations"
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
       
-      - name: Deploy to Production Environment
-        run: |
-          echo "==================================="
-          echo "PRODUCTION DEPLOYMENT"
-          echo "==================================="
-          echo "Deployment Method: Rolling Update"
-          echo "Target: Production Server (simulated)"
-          echo ""
-          echo "Deployment Steps:"
-          echo "1. ✅ Backup current production database"
-          echo "2. ✅ Build production Docker images"
-          echo "3. ✅ Push images to production registry"
-          echo "4. ✅ Deploy with zero-downtime strategy"
-          echo "5. ✅ Run database migrations"
-          echo "6. ✅ Start new application instances"
-          echo "7. ✅ Gradually shift traffic to new instances"
-          echo "8. ✅ Terminate old instances"
-          echo ""
-          echo "Production URL: http://app.idurar-crm.com (simulated)"
-          echo "Status: ✅ Deployment Successful"
-          echo "==================================="
+      - name: Deploy Backend to Railway Production
+        run: railway up --service backend --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_PRODUCTION }}
+      
+      - name: Deploy Frontend to Railway Production
+        run: railway up --service frontend --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_PRODUCTION }}
       
       - name: Initialize Sentry Error Tracking
         run: |

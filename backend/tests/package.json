@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "API tests for IDURAR ERP CRM Backend",
   "scripts": {
-    "test": "jest --coverage --verbose",
+    "test": "jest --coverage --verbose --testPathIgnorePatterns=.integration.test.js",
     "test:watch": "jest --watch",
     "test:integration": "jest --testMatch='**/*.integration.test.js' --verbose",
     "test:all": "jest --coverage --verbose"
