@@ -129,12 +129,12 @@ jobs:
         run: npm install -g @railway/cli
       
       - name: Deploy Backend to Railway Production
-        run: railway up --service backend --detach
+        run: railway up --service backend_production --detach
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_PRODUCTION }}
       
       - name: Deploy Frontend to Railway Production
-        run: railway up --service frontend --detach
+        run: railway up --service frontend_production --detach
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_PRODUCTION }}
       
