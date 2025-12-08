@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentry Test Page</title>
+    <script
+      src="https://browser.sentry-cdn.com/7.119.0/bundle.tracing.replay.min.js"
+      integrity="sha384-OYT1mUYIVhfn9dXWCCPOXGvOVXCLVN5W1v4eJJUkPJKEFfPUBWhz9xWPqcFHCHBH"
+      crossorigin="anonymous"
+    ></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        h1 {
+            color: #333;
+        }
+        button {
+            background: #5b4fc5;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #4a3fa5;
+        }
+        .success {
+            background: #28a745;
+        }
+        .warning {
+            background: #ffc107;
+            color: #333;
+        }
+        .info {
+            background: #17a2b8;
+        }
+        #status {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .log {
+            padding: 8px;
+            margin: 5px 0;
+            background: #f1f1f1;
+            border-left: 3px solid #5b4fc5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Sentry Error Tracking Test</h1>
+        <p>Test if Sentry is properly configured and capturing errors for the IDURAR ERP/CRM application.</p>
+        
+        <h3>Frontend (React) Sentry</h3>
+        <button onclick="testFrontendError()">Throw Frontend Error</button>
+        <button onclick="testFrontendMessage()" class="info">Send Info Message</button>
+        <button onclick="testUncaughtError()" class="warning">Uncaught Error</button>
+        
+        <h3>Backend (Node.js) Sentry</h3>
+        <button onclick="testBackendError()" class="warning">Test Backend Error</button>
+        <p><small>This will call a test endpoint that throws an error</small></p>
+        
+        <h3>Status</h3>
+        <div id="status">
+            <div class="log">Ready to test. Click buttons above to trigger errors.</div>
+        </div>
+    </div>
+
+    <script>
+        // NOTE: Replace 'YOUR_SENTRY_DSN' with your actual DSN for testing
+        // Get it from: https://sentry.io/settings/projects/your-project/keys/
+        const SENTRY_DSN = 'YOUR_SENTRY_DSN';  // Replace this before testing
+        
+        // Initialize Sentry for this test page
+        if (SENTRY_DSN && SENTRY_DSN !== 'YOUR_SENTRY_DSN') {
+            Sentry.init({
+                dsn: SENTRY_DSN,
+                environment: 'test',
+                integrations: [
+                    Sentry.browserTracingIntegration(),
+                    Sentry.replayIntegration(),
+                ],
+                tracesSampleRate: 1.0,
+                replaysSessionSampleRate: 1.0,
+                replaysOnErrorSampleRate: 1.0,
+                sendDefaultPii: true,
+            });
+        } else {
+            console.error('⚠️ Please set your Sentry DSN in the script section of this file');
+        }
+
+        const status = document.getElementById('status');
+
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = 'log';
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            status.appendChild(div);
+            console.log(message);
+        }
+
+        function testFrontendError() {
+            try {
+                log('Throwing test error...', 'error');
+                throw new Error('Test Frontend Error - ' + Date.now());
+            } catch (error) {
+                Sentry.captureException(error);
+                log('✅ Error sent to Sentry! Check your dashboard.', 'success');
+                log('Dashboard: https://sentry.io/organizations/YOUR_ORG/issues/', 'info');
+            }
+        }
+
+        function testFrontendMessage() {
+            log('Sending info message to Sentry...', 'info');
+            Sentry.captureMessage('Test info message from frontend - ' + Date.now(), 'info');
+            log('✅ Message sent! Check your Sentry dashboard.', 'success');
+        }
+
+        function testUncaughtError() {
+            log('Throwing uncaught error (this will be captured automatically)...', 'warning');
+            // This will be caught by Sentry automatically
+            setTimeout(() => {
+                throw new Error('Uncaught Test Error - ' + Date.now());
+            }, 100);
+            log('⚠️ Uncaught error thrown! Check Sentry in a few seconds.', 'warning');
+        }
+
+        async function testBackendError() {
+            log('Testing backend error endpoint...', 'info');
+            try {
+                // Try to call backend test endpoint
+                const response = await fetch('http://localhost:8888/api/test-sentry', {
+                    method: 'GET',
+                });
+                
+                if (!response.ok) {
+                    log('✅ Backend endpoint triggered! Error should be in Sentry.', 'success');
+                } else {
+                    log('⚠️ Backend endpoint responded successfully (no error thrown)', 'warning');
+                }
+            } catch (error) {
+                log('❌ Could not reach backend. Make sure it\'s running on port 8888', 'error');
+                log('Error: ' + error.message, 'error');
+            }
+        }
+
+        // Log initialization
+        if (SENTRY_DSN && SENTRY_DSN !== 'YOUR_SENTRY_DSN') {
+            log('✅ Sentry initialized for testing', 'success');
+            log('Frontend DSN: Configured', 'info');
+        } else {
+            log('⚠️ Sentry DSN not configured - update the script section', 'warning');
+        }
+    </script>
+</body>
+</html>

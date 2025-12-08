@@ -10,14 +10,21 @@ const cookieParser = require('cookie-parser');
 if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'staging') {
   try {
     const Sentry = require('@sentry/node');
-    Sentry.init({
-      dsn: process.env.SENTRY_DSN || 'https://example@sentry.io/project-id',
-      environment: process.env.NODE_ENV || 'development',
-      tracesSampleRate: 1.0,
-      // Capture 100% of transactions for performance monitoring
-      enabled: !!process.env.SENTRY_DSN,
-    });
-    console.log('✅ Sentry error tracking initialized');
+    const sentryDsn = process.env.SENTRY_DSN;
+    
+    if (sentryDsn) {
+      Sentry.init({
+        dsn: sentryDsn,
+        environment: process.env.NODE_ENV || 'development',
+        tracesSampleRate: 1.0,
+        // Capture 100% of transactions for performance monitoring
+        // Setting this option to true will send default PII data to Sentry
+        sendDefaultPii: true,
+      });
+      console.log('✅ Sentry error tracking initialized');
+    } else {
+      console.log('ℹ️ Sentry DSN not configured - error tracking disabled');
+    }
   } catch (error) {
     console.log('⚠️ Sentry not available (install @sentry/node for production)');
   }
