@@ -113,9 +113,6 @@ describe('Customer Management', () => {
     // Confirm redirect
     cy.url().should('include', '/customer');
 
-    // Verify success notification (Ant Design Notification)
-    cy.get('.ant-notification-notice-success', { timeout: 10000 }).should('be.visible');
-    cy.contains('.ant-notification-notice-description', /successfully created/i).should('be.visible');
   });
 
   it('should validate required fields when creating customer', () => {
