@@ -6,21 +6,26 @@ const compression = require('compression');
 const cookieParser = require('cookie-parser');
 
 // Initialize Sentry for error tracking and monitoring
-// Only initialize in production or staging environments
-if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'staging') {
+// Initialize when DSN is present (any environment)
+const sentryDsn = process.env.SENTRY_DSN;
+if (sentryDsn) {
   try {
     const Sentry = require('@sentry/node');
     Sentry.init({
-      dsn: process.env.SENTRY_DSN || 'https://example@sentry.io/project-id',
+      dsn: sentryDsn,
       environment: process.env.NODE_ENV || 'development',
       tracesSampleRate: 1.0,
       // Capture 100% of transactions for performance monitoring
-      enabled: !!process.env.SENTRY_DSN,
+      // Setting this option to true will send default PII data to Sentry
+      sendDefaultPii: true,
     });
     console.log('✅ Sentry error tracking initialized');
+    console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
   } catch (error) {
     console.log('⚠️ Sentry not available (install @sentry/node for production)');
   }
+} else {
+  console.log('ℹ️ Sentry DSN not configured - error tracking disabled');
 }
 
 const coreAuthRouter = require('./routes/coreRoutes/coreAuth');
@@ -61,7 +66,7 @@ app.use('/download', coreDownloadRouter);
 app.use('/public', corePublicRouter);
 
 // Sentry error handler - must be before other error handlers
-if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'staging') {
+if (process.env.SENTRY_DSN) {
   try {
     const Sentry = require('@sentry/node');
     app.use(Sentry.Handlers.errorHandler());

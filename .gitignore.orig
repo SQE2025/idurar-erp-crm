@@ -1,3 +1,12 @@
+<<<<<<< HEAD
+docs/
+# Root artifacts
+/*.md
+!/README.md
+/*.png
+/*.svg
+.DS_Store
+=======
 # Environment Variables - NEVER COMMIT THESE
 .env
 .env.*
@@ -43,3 +52,4 @@ coverage/
 *.tmp
 *.temp
 .cache/
+>>>>>>> test
