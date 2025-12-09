@@ -52,10 +52,4 @@ router
   );
 router.route('/setting/updateManySetting').patch(catchErrors(settingController.updateManySetting));
 
-// Test route for Sentry error tracking
-router.route('/test-sentry').get((req, res) => {
-  console.log('⚠️ Test Sentry endpoint called - throwing error...');
-  throw new Error('Test Sentry Backend Error - ' + Date.now());
-});
-
 module.exports = router;
